@@ -1,34 +1,64 @@
 const path = require('path');
+const tailwindcss = require('tailwindcss');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
 	mode: 'development',
-	entry: './src/main.js',
+  context: path.join(__dirname, '../src'),
+	entry: {
+    main: './index.js'
+  },
 	output: {
 		path: path.resolve(__dirname, '../dist'),
 		filename: 'bundle.js',
-		publicPath: '/',
+    publicPath: '/',
 	},
 	module: {
 		rules: [
 			{
-        test: /\.js?$/,
-				exclude: /node_modules/, //don't test node_modules folder
-				use: {
-					loader: 'babel-loader',
-				},
-      },
-      {
-      	test: /\.svelte$/,
+        test: /\.js$/i,
+        include: path.resolve(__dirname, '../src'),
         use: {
-          loader: 'svelte-loader',
-        },
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+          },
+        }
       },
       {
-        test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
+      	test: /\.(html|svelte)$/,
+        include: path.resolve(__dirname, '../src'),
+        use: 'svelte-loader'
+      },
+      {
+        test: /\.css$/i,
+        include: path.resolve(__dirname, '../src'),
+        use: [
+          'style-loader', 
+          'css-loader', 
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: [
+                  [
+                    tailwindcss,
+                    {
+                      config: './tailwind.config.js'
+                    }
+                  ],
+                  [
+                    "postcss-preset-env",
+                    {
+                    
+                    }
+                  ],
+                ],
+              }
+            }
+          }
+        ],
       },
       {
         test: /\.(jpg|jpeg|png|svg)$/,
@@ -37,21 +67,26 @@ module.exports = {
     ],
   },
   resolve: {
+    alias: {
+      svelte: path.resolve('node_modules', 'svelte/src/runtime')
+    },
     extensions: ['.mjs', '.js', '.svelte'],
+    mainFields: ['svelte', 'browser', 'module', 'main'],
+    conditionNames: ['svelte', 'browser', 'import']
   },
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, '../public/index.html'),
     }),
-    new MiniCssExtractPlugin(),
     new Dotenv(),
   ],
 	devServer: {
-		// historyApiFallback: true,
-		// contentBase: path.resolve(__dirname, 'dist'),
-		// hot: true,
-	},
-	resolve: {
-    conditionNames: ['require', 'svelte'],
-  },
+    port: 3000,
+    open: false,
+    hot: true,
+    compress: true,
+    historyApiFallback: true,
+  }
 };
+
+console.log(module.exports)
